@@ -94,15 +94,14 @@ object Compressor {
         if (isMinBitRateEnabled && bitrate <= MIN_BITRATE)
             return Result(success = false, failureMessage = INVALID_BITRATE)
 
-        //Handle new bitrate value
-        val newBitrate = getBitrate(bitrate, quality)
-
         //Handle new width and height values
         var (newWidth, newHeight) = generateWidthAndHeight(
             width,
-            height,
-            keepOriginalResolution
+            height
         )
+
+        //Handle new bitrate value
+        val newBitrate = getBitrate(bitrate, quality, newWidth, newHeight)
 
         //Handle rotation values and swapping height and width if needed
         rotation = when (rotation) {
@@ -445,7 +444,6 @@ object Compressor {
         bitrate: Int,
         quality: VideoQuality,
     ): Int {
-
         return when (quality) {
             VideoQuality.VERY_LOW -> (bitrate * 0.08).roundToInt()
             VideoQuality.LOW -> (bitrate * 0.1).roundToInt()
@@ -453,6 +451,69 @@ object Compressor {
             VideoQuality.HIGH -> (bitrate * 0.3).roundToInt()
             VideoQuality.VERY_HIGH -> (bitrate * 0.5).roundToInt()
         }
+    }
+
+    /**
+     * 修改原有获取方法，根据视频压缩后分辨率计算
+     * @param bitrate file's current bitrate
+     * @return new smaller bitrate value
+     * https://www.cnblogs.com/cai1432452416/p/11828008.html
+     */
+    private fun getBitrate(
+        width: Double,
+        height: Double,
+        bitrate: Int,
+        quality: VideoQuality
+    ): Int {
+        var newBitrate = when (quality) {
+            VideoQuality.VERY_LOW -> (width * height * 3 / 4).roundToInt()
+            VideoQuality.LOW -> (width * height * 3 / 2).roundToInt()
+            VideoQuality.MEDIUM -> (width * height * 2).roundToInt()
+            VideoQuality.HIGH -> (width * height * 3 * 2).roundToInt()
+            VideoQuality.VERY_HIGH -> (width * height * 3 * 4).roundToInt()
+        }
+
+        return if (newBitrate > bitrate)
+            bitrate
+        else
+            newBitrate
+    }
+
+    /**
+     * 1920/1080为最大分辨率
+     * @param width file's original width
+     * @param height file's original height
+     * @return new width and height pair
+     */
+    private fun generateWidthAndHeight(
+        width: Double,
+        height: Double
+    ): Pair<Int, Int> {
+        var scale;
+        val srcWidth = if (srcWidth % 2 == 1) srcWidth + 1 else srcWidth
+        val srcHeight = if (srcHeight % 2 == 1) srcHeight + 1 else srcHeight
+
+        val longSide = srcWidth.coerceAtLeast(srcHeight)
+        val shortSide = srcWidth.coerceAtMost(srcHeight)
+
+        val scale = longSide.toFloat() / shortSide
+        if (scale >= (16.0 / 9)) {
+            scale = if (longSide < 1920) {
+                1.0
+            } else {
+                1920 / longSide.toDouble()
+            }
+        } else if (0 <= scale && scale < 16.0 / 9) {
+            scale = if (shortSide < 1080) {
+                1.0
+            } else {
+                1080 / shortSide.toDouble()
+            }
+        } else {
+            scale = 1.0
+        }
+
+        return Pair(width * scale, height * scale)
     }
 
     /**
