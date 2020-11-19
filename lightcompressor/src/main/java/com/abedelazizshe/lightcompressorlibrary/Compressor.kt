@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.Log
 import java.io.File
 import java.nio.ByteBuffer
+import kotlin.math.nextDown
 import kotlin.math.roundToInt
 
 /**
@@ -466,11 +467,11 @@ object Compressor {
         height: Int
     ): Int {
         var newBitrate = when (quality) {
-            VideoQuality.VERY_LOW -> (width * height * 3 / 4).roundToInt()
-            VideoQuality.LOW -> (width * height * 3 / 2).roundToInt()
-            VideoQuality.MEDIUM -> (width * height * 2).roundToInt()
-            VideoQuality.HIGH -> (width * height * 3 * 2).roundToInt()
-            VideoQuality.VERY_HIGH -> (width * height * 3 * 4).roundToInt()
+            VideoQuality.VERY_LOW -> (width.toDouble() * height.toDouble() * 3 / 4).roundToInt()
+            VideoQuality.LOW -> (width.toDouble() * height.toDouble() * 3 / 2).roundToInt()
+            VideoQuality.MEDIUM -> (width.toDouble() * height.toDouble() * 2).roundToInt()
+            VideoQuality.HIGH -> (width.toDouble() * height.toDouble() * 3 * 2).roundToInt()
+            VideoQuality.VERY_HIGH -> (width.toDouble() * height.toDouble() * 3 * 4).roundToInt()
         }
 
         return if (newBitrate > bitrate)
@@ -486,11 +487,11 @@ object Compressor {
      * @return new width and height pair
      */
     private fun generateWidthAndHeight(
-        srcWidth: Double,
-        srcHeight: Double
+        width: Double,
+        height: Double
     ): Pair<Int, Int> {
-        val srcWidth = if (srcWidth % 2 == 1) srcWidth + 1 else srcWidth
-        val srcHeight = if (srcHeight % 2 == 1) srcHeight + 1 else srcHeight
+        val srcWidth = if (width.toInt() % 2 == 1) width + 1 else width
+        val srcHeight = if (height.toInt() % 2 == 1) height + 1 else height
 
         val longSide = srcWidth.coerceAtLeast(srcHeight)
         val shortSide = srcWidth.coerceAtMost(srcHeight)
@@ -512,7 +513,7 @@ object Compressor {
             scale = 1.0
         }
 
-        return Pair(width * scale, height * scale)
+        return Pair((width * scale).toInt(), (height * scale).toInt())
     }
 
     /**
