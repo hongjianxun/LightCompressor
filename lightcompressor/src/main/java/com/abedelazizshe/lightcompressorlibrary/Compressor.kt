@@ -460,10 +460,10 @@ object Compressor {
      * https://www.cnblogs.com/cai1432452416/p/11828008.html
      */
     private fun getBitrate(
-        width: Double,
-        height: Double,
         bitrate: Int,
-        quality: VideoQuality
+        quality: VideoQuality,
+        width: Int,
+        height: Int
     ): Int {
         var newBitrate = when (quality) {
             VideoQuality.VERY_LOW -> (width * height * 3 / 4).roundToInt()
@@ -486,17 +486,16 @@ object Compressor {
      * @return new width and height pair
      */
     private fun generateWidthAndHeight(
-        width: Double,
-        height: Double
+        srcWidth: Double,
+        srcHeight: Double
     ): Pair<Int, Int> {
-        var scale;
         val srcWidth = if (srcWidth % 2 == 1) srcWidth + 1 else srcWidth
         val srcHeight = if (srcHeight % 2 == 1) srcHeight + 1 else srcHeight
 
         val longSide = srcWidth.coerceAtLeast(srcHeight)
         val shortSide = srcWidth.coerceAtMost(srcHeight)
 
-        val scale = longSide.toFloat() / shortSide
+        var scale = longSide.toFloat() / shortSide
         if (scale >= (16.0 / 9)) {
             scale = if (longSide < 1920) {
                 1.0
